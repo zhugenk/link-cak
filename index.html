@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Link & Account Note</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+  body { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; display: flex; justify-content: center; align-items: flex-start; }
+  
+  .container { background: #fff; width: 100%; max-width: 640px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); padding: 30px; margin-top: 20px; position: relative; }
+  h1 { text-align: center; color: #333; margin-bottom: 8px; font-size: 1.8rem; }
+  .subtitle { text-align: center; color: #888; font-size: 0.9rem; margin-bottom: 25px; }
+  
+  /* TOMBOL PANAH RAHASIA */
+  .secret-arrow-btn {
+    position: absolute; top: 20px; right: 20px;
+    background: #eef1ff; border: 2px solid #667eea; color: #667eea;
+    width: 40px; height: 40px; border-radius: 50%;
+    font-size: 1.2rem; font-weight: bold; cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
+    transition: all 0.3s; z-index: 10;
+  }
+  .secret-arrow-btn:hover { background: #667eea; color: #fff; transform: scale(1.1); }
+
+  /* FORM LINK */
+  .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .row { display: flex; gap: 10px; }
+  #titleInput, #linkInput, #searchInput { flex: 1; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; outline: none; transition: border-color 0.3s; }
+  #titleInput:focus, #linkInput:focus, #searchInput:focus { border-color: #667eea; }
+  #saveBtn { padding: 14px 24px; background: #667eea; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; white-space: nowrap; }
+  #saveBtn:hover { background: #5568d3; }
+  #saveBtn:disabled { background: #aaa; cursor: not-allowed; }
+  
+  .search-box { position: relative; margin-bottom: 20px; }
+  .search-box::before { content: '🔍'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; opacity: 0.6; pointer-events: none; }
+  #searchInput { width: 100%; padding-left: 42px; }
+  
+  .link-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .link-item { display: flex; align-items: flex-start; gap: 12px; background: #f7f8fc; padding: 14px 16px; border-radius: 10px; border-left: 4px solid #667eea; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .link-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .link-title { font-weight: 600; color: #333; font-size: 1rem; word-break: break-word; }
+  .link-title .view-acc-btn { color: #667eea; font-size: 0.75rem; cursor: pointer; text-decoration: underline; margin-left: 6px; }
+  .link-title .view-acc-btn:hover { color: #5568d3; }
+  .link-url { color: #667eea; text-decoration: none; word-break: break-all; font-size: 0.85rem; transition: color 0.2s; }
+  .link-url:hover { color: #5568d3; text-decoration: underline; }
+  .delete-btn { background: transparent; border: none; color: #e74c3c; font-size: 1.2rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+  .delete-btn:hover { background: #fdecea; }
+  .empty-msg { text-align: center; color: #aaa; padding: 30px 0; font-style: italic; display: none; }
+  .empty-msg.show { display: block; }
+  
+  /* PAGINATION & DEBUG */
+  .pagination { display: none; justify-content: center; align-items: center; gap: 6px; margin-top: 22px; flex-wrap: wrap; }
+  .pagination.show { display: flex; }
+  .pagination button { min-width: 38px; height: 38px; padding: 0 10px; border: 2px solid #e0e0e0; background: #fff; color: #555; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .pagination button:hover:not(:disabled):not(.active) { border-color: #667eea; color: #667eea; }
+  .pagination button.active { background: #667eea; border-color: #667eea; color: #fff; cursor: default; }
+  #debugPanel { margin-top: 25px; padding: 12px; background: #1e1e1e; color: #0f0; border-radius: 8px; font-family: monospace; font-size: 0.75rem; max-height: 150px; overflow-y: auto; display: none; }
+  #debugPanel.show { display: block; }
+
+  /* ============ MODAL MENU AKUN ============ */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(3px); }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: #fff; width: 100%; max-width: 500px; border-radius: 16px; padding: 28px 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: modalIn 0.25s ease; position: relative; max-height: 90vh; overflow-y: auto; }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  .btn-close { position: absolute; top: 14px; right: 18px; background: transparent; border: none; font-size: 1.6rem; color: #aaa; cursor: pointer; }
+  .btn-close:hover { color: #e74c3c; }
+  
+  /* FORM TAMBAH AKUN DI MODAL */
+  .add-acc-toggle { background: #27ae60; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 15px; display: block; font-size: 0.95rem; }
+  
+  .account-form { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 15px; background: #f0fdf4; border: 1px solid #27ae60; border-radius: 10px; }
+  .account-form.show { display: flex; }
+  .account-form input { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 0.95rem; outline: none; }
+  .account-form input:focus { border-color: #667eea; }
+  .account-form button { padding: 12px; background: #27ae60; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .account-form button:hover { background: #219653; }
+  
+  /* DAFTAR AKUN */
+  .app-group { background: #fff; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .app-header { background: #f7f8fc; padding: 12px 16px; font-weight: 700; color: #333; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+  
+  .acc-item { padding: 12px 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+  .acc-item:last-child { border-bottom: none; }
+  .acc-info { flex: 1; min-width: 0; }
+  .acc-detail { font-size: 0.85rem; color: #666; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .acc-detail strong { color: #444; min-width: 70px; display: inline-block; }
+  .copy-btn { background: #eef1ff; border: none; color: #667eea; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+  .copy-btn:hover { background: #667eea; color: #fff; }
+  .del-acc-btn { background: transparent; border: none; color: #e74c3c; font-size: 1.1rem; cursor: pointer; padding: 4px; }
+  .del-acc-btn:hover { color: #c0392b; }
+
+  /* GLOBAL ERROR TOAST */
+  #errorToast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #e74c3c; color: white; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; transition: top 0.3s ease; }
+  #errorToast.show { top: 20px; }
+  
+  @media (max-width: 480px) { .row { flex-direction: column; } #saveBtn { width: 100%; } .secret-arrow-btn { top: 15px; right: 15px; width: 35px; height: 35px; font-size: 1rem; } }
+</style>
+</head>
+<body>
+
+<div id="errorToast">⚠️ Terjadi kesalahan sistem.</div>
+
+<div class="container">
+  <button class="secret-arrow-btn" id="secretArrowBtn" title="Menu Daftar Akun">➔</button>
+
+  <h1>🔗 Link Note</h1>
+  <p class="subtitle">Tersimpan di cloud • Akses dari mana saja</p>
+
+  <div class="form-group">
+    <input type="text" id="titleInput" placeholder="Judul link (contoh: Google)" />
+    <div class="row">
+      <input type="url" id="linkInput" placeholder="Tempel link di sini (https://...)" />
+      <button id="saveBtn">Simpan</button>
+    </div>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Cari judul link..." autocomplete="off" />
+  </div>
+
+  <p id="searchInfo" style="display:none; text-align:center; color:#888; font-size:0.85rem; margin-bottom:12px;"></p>
+  <ul class="link-list" id="linkList"></ul>
+  <p class="empty-msg" id="emptyMsg">Memuat data atau belum ada link...</p>
+  <div class="pagination" id="pagination"></div>
+
+  <div id="debugPanel">
+    <div style="color:#fff; margin-bottom:5px;">🐞 Debug Log:</div>
+  </div>
+</div>
+
+<!-- ============ MODAL DAFTAR AKUN ============ -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal-box">
+    <button class="btn-close" id="closeAccountModal">×</button>
+    
+    <h2 id="modalTitle" style="font-size: 1.4rem; color: #333; margin-bottom: 5px; text-align: center;">🔐 Daftar Akun</h2>
+    <p id="modalSubtitle" style="text-align: center; color: #888; font-size: 0.85rem; margin-bottom: 20px;">Semua akun aplikasi Anda terpusat di sini</p>
+
+    <button id="backToAllBtn" style="display:none; background: #eef1ff; color: #667eea; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 15px; width: 100%;">⬅ Kembali ke Semua Akun</button>
+
+    <!-- TOMBOL TAMBAH SELALU MUNCUL -->
+    <button class="add-acc-toggle" id="showAddAccBtn">➕ Tambah Username Baru</button>
+    
+    <div class="account-form" id="addAccountForm">
+      <input type="text" id="accAppName" placeholder="Nama Aplikasi (contoh: Instagram)" />
+      <input type="text" id="accUsername" placeholder="Username / Email" />
+      <input type="text" id="accPassword" placeholder="Password" />
+      <button id="saveAccountBtn">Simpan Akun</button>
+    </div>
+
+    <div id="accountListContainer"></div>
+  </div>
+</div>
+
+<script>
+  // ============ KONFIGURASI SUPABASE ============
+  const SUPABASE_URL = 'https://dfrqholefeooarkniwmg.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcnFob2xlZmVvb2Fya25pd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3MjAxNjUsImV4cCI6MjEwODI5NjE2NX0.PNNdUDDf9cCh2rTXNXD9wObr5uUfggBz4sTSsHbfCn4';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ============ GLOBAL ERROR HANDLER (ANTI-FREEZE) ============
+  window.addEventListener('error', function(e) {
+    console.error('Global Error:', e);
+    showErrorToast('Terjadi kesalahan: ' + e.message);
+  });
+  
+  window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled Promise:', e.reason);
+    showErrorToast('Koneksi lambat atau gagal memuat data.');
+  });
+
+  function showErrorToast(msg) {
+    const toast = document.getElementById('errorToast');
+    toast.textContent = '⚠️ ' + msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 5000);
+  }
+
+  // ============ STATE ============
+  let allLinks = [];
+  let allAccounts = [];
+  let isFetchingLinks = false;
+  let currentPage = 1;
+  let filteredAppName = null;
+  const ITEMS_PER_PAGE = 10;
+
+  // ============ ELEMEN DOM ============
+  const titleInput = document.getElementById('titleInput');
+  const linkInput = document.getElementById('linkInput');
+  const searchInput = document.getElementById('searchInput');
+  const saveBtn = document.getElementById('saveBtn');
+  const linkList = document.getElementById('linkList');
+  const emptyMsg = document.getElementById('emptyMsg');
+  const pagination = document.getElementById('pagination');
+  const debugPanel = document.getElementById('debugPanel');
+  
+  const secretArrowBtn = document.getElementById('secretArrowBtn');
+  const accountModal = document.getElementById('accountModal');
+  const closeAccountModal = document.getElementById('closeAccountModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalSubtitle = document.getElementById('modalSubtitle');
+  const backToAllBtn = document.getElementById('backToAllBtn');
+  const showAddAccBtn = document.getElementById('showAddAccBtn');
+  const addAccountForm = document.getElementById('addAccountForm');
+  const accAppName = document.getElementById('accAppName');
+  const accUsername = document.getElementById('accUsername');
+  const accPassword = document.getElementById('accPassword');
+  const saveAccountBtn = document.getElementById('saveAccountBtn');
+  const accountListContainer = document.getElementById('accountListContainer');
+
+  // ============ UTILITAS DEBUG ============
+  function logDebug(msg, type = 'info') {
+    const time = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    let colorClass = type === 'error' ? 'color:#ff5555;' : (type === 'success' ? 'color:#55ff55;' : '');
+    entry.innerHTML = `<span style="color:#888; margin-right:8px;">[${time}]</span><span style="${colorClass}">${msg}</span>`;
+    debugPanel.appendChild(entry);
+    debugPanel.scrollTop = debugPanel.scrollHeight;
+    console.log(`[DEBUG] ${msg}`);
+  }
+  if (window.location.search.includes('debug=1')) debugPanel.classList.add('show');
+
+  function withTimeout(promise, ms = 8000, label = 'Request') {
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timeout.`)), ms));
+    return Promise.race([promise, timeout]);
+  }
+
+  // ============ FUNGSI LINK NOTE ============
+  async function fetchLinks() {
+    if (isFetchingLinks) return;
+    isFetchingLinks = true;
+    saveBtn.disabled = true;
+    emptyMsg.textContent = 'Memuat data dari server...';
+    emptyMsg.classList.add('show');
+
+    try {
+      const { data, error } = await withTimeout(
+        supabaseClient.from('links').select('*').order('created_at', { ascending: false }), 8000, 'Fetch Links'
+      );
+      if (error) throw new Error(error.message);
+      allLinks = data || [];
+      renderLinks();
+    } catch (err) {
+      logDebug(`Fetch error: ${err.message}`, 'error');
+      emptyMsg.textContent = `Gagal memuat: ${err.message}`;
+      showErrorToast(`Gagal memuat link: ${err.message}`);
+    } finally {
+      isFetchingLinks = false;
+      saveBtn.disabled = false;
+    }
+  }
+
+  async function addLink() {
+    const title = titleInput.value.trim();
+    let url = linkInput.value.trim();
+    if (!url) { alert('Masukkan link dulu!'); return; }
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+    saveBtn.disabled = true; saveBtn.textContent = 'Menyimpan...';
+    try {
+      const { error } = await withTimeout(
+        supabaseClient.from('links').insert([{ title: title || url, url }]), 8000, 'Insert Link'
+      );
+      if (error) throw new Error(error.message);
+      titleInput.value = ''; linkInput.value = '';
+      currentPage = 1;
+      await fetchLinks();
+    } catch (err) {
+      showErrorToast(`Gagal menyimpan: ${err.message}`);
+    } finally {
+      saveBtn.disabled = false; saveBtn.textContent = 'Simpan';
+    }
+  }
+
+  async function deleteLink(id) {
+    if (!confirm('Hapus link ini?')) return;
+    try {
+      const { error } = await withTimeout(supabaseClient.from('links').delete().eq('id', id), 8000, 'Delete Link');
+      if (error) throw new Error(error.message);
+      await fetchLinks();
+    } catch (err) { showErrorToast(`Gagal menghapus: ${err.message}`); }
+  }
+
+  function renderLinks() {
+    const keyword = searchInput.value.trim().toLowerCase();
+    const filtered = allLinks.filter(item => !keyword || (item.title || '').toLowerCase().includes(keyword));
+    const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const pageItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    
+    linkList.innerHTML = '';
+    emptyMsg.classList.toggle('show', filtered.length === 0);
+    if (allLinks.length === 0) emptyMsg.textContent = 'Belum ada link tersimpan.';
+    else if (filtered.length === 0) emptyMsg.textContent = 'Link tidak ditemukan.';
+    else emptyMsg.classList.remove('show');
+
+    pageItems.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'link-item';
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'link-title';
+      titleSpan.innerHTML = `${item.title} <span class="view-acc-btn">(Lihat Akun)</span>`;
+      
+      titleSpan.querySelector('.view-acc-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAppAccounts(item.title);
+      });
+
+      const urlLink = document.createElement('a');
+      urlLink.className = 'link-url';
+      urlLink.href = item.url;
+      urlLink.target = '_blank';
+      urlLink.textContent = item.url;
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'link-content';
+      contentDiv.appendChild(titleSpan);
+      contentDiv.appendChild(urlLink);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.innerHTML = '🗑️';
+      delBtn.onclick = () => deleteLink(item.id);
+
+      li.appendChild(contentDiv);
+      li.appendChild(delBtn);
+      linkList.appendChild(li);
+    });
+    renderPagination(totalPages, filtered.length);
+  }
+
+  function renderPagination(totalPages, totalItems) {
+    pagination.innerHTML = '';
+    if (totalItems <= ITEMS_PER_PAGE) { pagination.classList.remove('show'); return; }
+    pagination.classList.add('show');
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      if (i === currentPage) btn.classList.add('active');
+      btn.onclick = () => { currentPage = i; renderLinks(); window.scrollTo({top:0, behavior:'smooth'}); };
+      pagination.appendChild(btn);
+    }
+  }
+
+  // ============ FUNGSI MENU AKUN ============
+  async function fetchAccounts() {
+    accountListContainer.innerHTML = '<p style="text-align:center; color:#888; font-size:0.9rem;">Memuat akun...</p>';
+    try {
+      const { data, error } = await withTimeout(
+        supabaseClient.from('accounts').select('*').order('app_name', { ascending: true }), 8000, 'Fetch Accounts'
+      );
+      if (error) throw new Error(error.message);
+      allAccounts = data || [];
+      renderAccounts();
+    } catch (err) {
+      logDebug(`Fetch Account error: ${err.message}`, 'error');
+      accountListContainer.innerHTML = `<p style="text-align:center; color:#e74c3c; font-size:0.9rem;">Gagal memuat: ${err.message}</p>`;
+      showErrorToast(`Gagal memuat akun: ${err.message}`);
+    }
+  }
+
+  function renderAccounts() {
+    accountListContainer.innerHTML = '';
+    if (allAccounts.length === 0) {
+      accountListContainer.innerHTML = '<p style="text-align:center; color:#aaa; font-size:0.9rem; font-style:italic;">Belum ada akun tersimpan.</p>';
+      return;
+    }
+
+    let grouped = {};
+    allAccounts.forEach(acc => {
+      const key = acc.app_name.toLowerCase().trim();
+      if (!grouped[key]) grouped[key] = { name: acc.app_name, accounts: [] };
+      grouped[key].accounts.push(acc);
+    });
+
+    if (filteredAppName) {
+      const filterKey = filteredAppName.toLowerCase().trim();
+      const matchedKeys = Object.keys(grouped).filter(k => k.includes(filterKey) || filterKey.includes(k));
+      
+      if (matchedKeys.length === 0) {
+        accountListContainer.innerHTML = `<p style="text-align:center; color:#e74c3c; font-size:0.9rem;">Belum ada akun untuk aplikasi "${filteredAppName}".</p>`;
+        return;
+      }
+      const filteredGrouped = {};
+      matchedKeys.forEach(k => { filteredGrouped[k] = grouped[k]; });
+      grouped = filteredGrouped;
+    }
+
+    for (const key in grouped) {
+      const app = grouped[key];
+      const appDiv = document.createElement('div');
+      appDiv.className = 'app-group';
+      
+      const header = document.createElement('div');
+      header.className = 'app-header';
+      header.innerHTML = `<span>📱 ${app.name}</span>`;
+      appDiv.appendChild(header);
+
+      app.accounts.forEach(acc => {
+        const accItem = document.createElement('div');
+        accItem.className = 'acc-item';
+        accItem.innerHTML = `
+          <div class="acc-info">
+            <div class="acc-detail"><strong>Username:</strong> <span>${acc.username}</span> <button class="copy-btn" onclick="copyText('${acc.username}')">Salin</button></div>
+            <div class="acc-detail"><strong>Password:</strong> <span>${acc.password}</span> <button class="copy-btn" onclick="copyText('${acc.password}')">Salin</button></div>
+          </div>
+          <button class="del-acc-btn" onclick="deleteAccount(${acc.id})" title="Hapus Akun">🗑️</button>
+        `;
+        appDiv.appendChild(accItem);
+      });
+
+      accountListContainer.appendChild(appDiv);
+    }
+  }
+
+  async function saveNewAccount() {
+    const appName = accAppName.value.trim();
+    const username = accUsername.value.trim();
+    const password = accPassword.value.trim();
+    
+    if (!appName || !username || !password) {
+      alert('Semua kolom harus diisi!'); return;
+    }
+    
+    saveAccountBtn.disabled = true; saveAccountBtn.textContent = 'Menyimpan...';
+    try {
+      const { error } = await withTimeout(
+        supabaseClient.from('accounts').insert([{ app_name: appName, username, password }]), 8000, 'Insert Account'
+      );
+      if (error) throw new Error(error.message);
+      accAppName.value = ''; accUsername.value = ''; accPassword.value = '';
+      addAccountForm.classList.remove('show');
+      await fetchAccounts();
+      logDebug('Akun baru disimpan.', 'success');
+    } catch (err) {
+      showErrorToast(`Gagal menyimpan akun: ${err.message}`);
+    } finally {
+      saveAccountBtn.disabled = false; saveAccountBtn.textContent = 'Simpan Akun';
+    }
+  }
+
+  async function deleteAccount(id) {
+    if (!confirm('Hapus akun ini?')) return;
+    try {
+      const { error } = await withTimeout(supabaseClient.from('accounts').delete().eq('id', id), 8000, 'Delete Account');
+      if (error) throw new Error(error.message);
+      await fetchAccounts();
+    } catch (err) { showErrorToast(`Gagal menghapus: ${err.message}`); }
+  }
+
+  window.copyText = function(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Berhasil disalin: ' + text);
+    }).catch(() => showErrorToast('Gagal menyalin teks.'));
+  };
+
+  window.openAppAccounts = function(appName) {
+    filteredAppName = appName;
+    accountModal.classList.add('show');
+    modalTitle.textContent = `🔐 Akun: ${appName}`;
+    modalSubtitle.textContent = `Menampilkan username untuk aplikasi ini`;
+    backToAllBtn.style.display = 'block';
+    
+    // Pastikan tombol tambah SELALU terlihat
+    showAddAccBtn.style.display = 'block';
+    
+    accAppName.value = appName; // Otomatis isi nama aplikasi
+    addAccountForm.classList.remove('show'); // Sembunyikan form dulu
+    
+    fetchAccounts();
+  };
+
+  function showAllAccounts() {
+    filteredAppName = null;
+    modalTitle.textContent = '🔐 Daftar Akun';
+    modalSubtitle.textContent = 'Semua akun aplikasi Anda terpusat di sini';
+    backToAllBtn.style.display = 'none';
+    
+    // Pastikan tombol tambah SELALU terlihat
+    showAddAccBtn.style.display = 'block';
+    
+    accAppName.value = '';
+    addAccountForm.classList.remove('show');
+    fetchAccounts();
+  }
+
+  // ============ EVENT LISTENER ============
+  saveBtn.addEventListener('click', addLink);
+  searchInput.addEventListener('input', () => { currentPage = 1; renderLinks(); });
+  
+  secretArrowBtn.addEventListener('click', () => {
+    accountModal.classList.add('show');
+    showAllAccounts();
+  });
+  
+  closeAccountModal.addEventListener('click', () => accountModal.classList.remove('show'));
+  accountModal.addEventListener('click', (e) => { if (e.target === accountModal) accountModal.classList.remove('show'); });
+  
+  backToAllBtn.addEventListener('click', showAllAccounts);
+  
+  showAddAccBtn.addEventListener('click', () => {
+    addAccountForm.classList.toggle('show');
+    if (addAccountForm.classList.contains('show')) accAppName.focus();
+  });
+  
+  saveAccountBtn.addEventListener('click', saveNewAccount);
+
+  // ============ INISIALISASI ============
+  logDebug('Aplikasi dimulai.');
+  fetchLinks();
+</script>
+
+</body>
+</html>
