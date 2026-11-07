@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cak-Link & Account Note</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
   
@@ -314,20 +314,29 @@
   }
 
   async function syncOfflineQueue() {
+    if (!isSupabaseOnline) return;
+    if (offlineQueue.length === 0) { fetchLinks(); return; }
+
+    const remaining = [];
     let successCount = 0;
-    for (let i = 0; i < offlineQueue.length; i++) {
-      const item = offlineQueue[i];
+
+    for (const item of offlineQueue) {
       try {
         const { error } = await supabaseClient.from('links').insert([{ title: item.title, url: item.url }]);
-        if (!error) successCount++;
-      } catch (e) {}
+        if (error) throw new Error(error.message);
+        successCount++;
+      } catch (e) {
+        remaining.push(item); 
+      }
     }
-    if (successCount > 0) {
-      showErrorToast(`Sinkronisasi ${successCount} link offline berhasil.`, '#27ae60');
-      offlineQueue = []; 
-      localStorage.setItem('offlineLinks', JSON.stringify(offlineQueue));
-    }
-    fetchLinks(); 
+
+    offlineQueue = remaining;
+    localStorage.setItem('offlineLinks', JSON.stringify(offlineQueue));
+
+    if (successCount > 0) showErrorToast(`✅ ${successCount} link offline berhasil disinkronkan.`, '#27ae60');
+    if (remaining.length > 0) showErrorToast(`⚠️ ${remaining.length} link gagal sync, akan dicoba lagi.`, '#f39c12');
+
+    fetchLinks();
   }
 
   // ============ FUNGSI HEARTBEAT (Manual & 24 Jam) ============
@@ -494,9 +503,12 @@
   async function deleteLink(id) {
     if (!confirm('Hapus link ini?')) return;
     if (typeof id === 'string' && id.startsWith('offline-')) {
-      offlineQueue = offlineQueue.filter((item, index) => 'offline-' + index !== id);
-      localStorage.setItem('offlineLinks', JSON.stringify(offlineQueue));
-      fetchLinks();
+      const idx = parseInt(id.replace('offline-', ''), 10);
+      if (!isNaN(idx) && idx >= 0 && idx < offlineQueue.length) {
+        offlineQueue.splice(idx, 1);
+        localStorage.setItem('offlineLinks', JSON.stringify(offlineQueue));
+        fetchLinks();
+      }
       return;
     }
     if (!isSupabaseOnline) { showErrorToast('Tidak dapat menghapus saat offline.', '#f39c12'); return; }
