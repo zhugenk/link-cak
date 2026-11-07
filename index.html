@@ -322,19 +322,25 @@
 
     for (const item of offlineQueue) {
       try {
-        const { error } = await supabaseClient.from('links').insert([{ title: item.title, url: item.url }]);
+        const { error } = await supabaseClient
+          .from('links')
+          .insert([{ title: item.title, url: item.url }]);
         if (error) throw new Error(error.message);
         successCount++;
       } catch (e) {
-        remaining.push(item); 
+        remaining.push(item); // Simpan yang gagal untuk dicoba lagi
       }
     }
 
     offlineQueue = remaining;
     localStorage.setItem('offlineLinks', JSON.stringify(offlineQueue));
 
-    if (successCount > 0) showErrorToast(`✅ ${successCount} link offline berhasil disinkronkan.`, '#27ae60');
-    if (remaining.length > 0) showErrorToast(`⚠️ ${remaining.length} link gagal sync, akan dicoba lagi.`, '#f39c12');
+    if (successCount > 0) {
+      showErrorToast(`✅ ${successCount} link offline berhasil disinkronkan.`, '#27ae60');
+    }
+    if (remaining.length > 0) {
+      showErrorToast(`⚠️ ${remaining.length} link gagal sync.`, '#f39c12');
+    }
 
     fetchLinks();
   }
@@ -447,8 +453,8 @@
       );
       if (error) throw new Error(error.message);
       allLinks = data || [];
-      const offlineMapped = offlineQueue.map(item => ({
-        id: 'offline-' + Math.random(), title: item.title, url: item.url, isOffline: true
+      const offlineMapped = offlineQueue.map((item, i) => ({
+        id: 'offline-' + i, title: item.title, url: item.url, isOffline: true
       }));
       allLinks = [...offlineMapped, ...allLinks];
       renderLinks();
@@ -500,7 +506,7 @@
     }
   }
 
-  async function deleteLink(id) {
+ async function deleteLink(id) {
     if (!confirm('Hapus link ini?')) return;
     if (typeof id === 'string' && id.startsWith('offline-')) {
       const idx = parseInt(id.replace('offline-', ''), 10);
@@ -742,8 +748,22 @@
   // ============ INISIALISASI ============
   logDebug('Aplikasi dimulai. Menguji koneksi...');
   checkSupabaseConnection(false).then(() => {
-    if (isSupabaseOnline) fetchLinks();
+    if (isSupabaseOnline) {
+      // Jika ada antrean offline, jalankan sinkronisasi. Jika tidak, langsung ambil data.
+      if (offlineQueue.length > 0) {
+        syncOfflineQueue();
+      } else {
+        fetchLinks(); 
+      }
+    }
   });
+
+  // Coba cek koneksi & sync otomatis setiap 30 detik jika masih ada antrean offline
+  setInterval(() => {
+    if (!isSupabaseOnline || offlineQueue.length > 0) {
+      checkSupabaseConnection(false);
+    }
+  }, 30000);
   
   scheduleMidnightCheck();
 </script>
