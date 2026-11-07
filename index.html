@@ -10,14 +10,14 @@
   
   /* Latar belakang gradasi full screen */
   body { 
-    min-height: 100vh; 
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    background-attachment: fixed;
-    padding: 20px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-  }
+  min-height: 100vh; 
+  background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%);
+  background-attachment: fixed;
+  padding: 20px; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+}
   
   /* HEADER STICKY (Menempel di atas) */
   .sticky-header {
@@ -66,22 +66,22 @@
   .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
   .secret-arrow-btn {
-    background: #eef1ff; border: 2px solid #667eea; color: #667eea;
+    background: #ffebee; border: 2px solid #e53935; color: #e53935;
     width: 36px; height: 36px; border-radius: 50%;
     font-size: 1.1rem; font-weight: bold; cursor: pointer;
     display: flex; justify-content: center; align-items: center;
     transition: all 0.3s;
   }
-  .secret-arrow-btn:hover { background: #667eea; color: #fff; transform: scale(1.1); }
+  .secret-arrow-btn:hover { background: #e53935; color: #fff; transform: scale(1.1); }
 
   /* TOMBOL TAMBAH (+) DAN FORM YANG TERSEMBUNYI */
   .add-link-toggle {
     width: 100%;
     padding: 15px;
     background: #f7f8fc;
-    border: 2px dashed #667eea;
+    border: 2px dashed #e53935;
     border-radius: 10px;
-    color: #667eea;
+    color: #e53935;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -92,7 +92,7 @@
     align-items: center;
     gap: 8px;
   }
-  .add-link-toggle:hover { background: #eef1ff; }
+  .add-link-toggle:hover { background: #ffebee; }
 
   .form-group { 
     display: none; /* Tersembunyi secara default */
@@ -110,7 +110,7 @@
 
   .row { display: flex; gap: 10px; }
   #titleInput, #linkInput, #searchInput { flex: 1; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; outline: none; transition: border-color 0.3s; background: #fff; }
-  #titleInput:focus, #linkInput:focus, #searchInput:focus { border-color: #667eea; }
+  #titleInput:focus, #linkInput:focus, #searchInput:focus { border-color: #e53935; }
   
   .btn-save { padding: 14px 24px; background: #27ae60; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; white-space: nowrap; }
   .btn-save:hover { background: #219653; }
@@ -124,14 +124,14 @@
   #searchInput { width: 100%; padding-left: 42px; border-color: #e0e0e0; }
   
   .link-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-  .link-item { display: flex; align-items: flex-start; gap: 12px; background: #f7f8fc; padding: 14px 16px; border-radius: 10px; border-left: 4px solid #667eea; animation: fadeIn 0.3s ease; }
+  .link-item { display: flex; align-items: flex-start; gap: 12px; background: #f7f8fc; padding: 14px 16px; border-radius: 10px; border-left: 4px solid #e53935; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
   .link-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .link-title { font-weight: 600; color: #333; font-size: 1rem; word-break: break-word; }
-  .link-title .view-acc-btn { color: #667eea; font-size: 0.75rem; cursor: pointer; text-decoration: underline; margin-left: 6px; }
-  .link-title .view-acc-btn:hover { color: #5568d3; }
-  .link-url { color: #667eea; text-decoration: none; word-break: break-all; font-size: 0.85rem; transition: color 0.2s; }
-  .link-url:hover { color: #5568d3; text-decoration: underline; }
+  .link-title .view-acc-btn { color: #e53935; font-size: 0.75rem; cursor: pointer; text-decoration: underline; margin-left: 6px; }
+  .link-title .view-acc-btn:hover { color: #c62828; }
+  .link-url { color: #e53935; text-decoration: none; word-break: break-all; font-size: 0.85rem; transition: color 0.2s; }
+  .link-url:hover { color: #c62828; text-decoration: underline; }
   .delete-btn { background: transparent; border: none; color: #e74c3c; font-size: 1.2rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
   .delete-btn:hover { background: #fdecea; }
   .empty-msg { text-align: center; color: #aaa; padding: 30px 0; font-style: italic; display: none; }
@@ -141,8 +141,8 @@
   .pagination { display: none; justify-content: center; align-items: center; gap: 6px; margin-top: 22px; flex-wrap: wrap; }
   .pagination.show { display: flex; }
   .pagination button { min-width: 38px; height: 38px; padding: 0 10px; border: 2px solid #e0e0e0; background: #fff; color: #555; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-  .pagination button:hover:not(:disabled):not(.active) { border-color: #667eea; color: #667eea; }
-  .pagination button.active { background: #667eea; border-color: #667eea; color: #fff; cursor: default; }
+  .pagination button:hover:not(:disabled):not(.active) { border-color: #e53935; color: #e53935; }
+  .pagination button.active { background: #e53935; border-color: #e53935; color: #fff; cursor: default; }
   
   #debugPanel { margin-top: 25px; padding: 12px; background: #1e1e1e; color: #0f0; border-radius: 8px; font-family: monospace; font-size: 0.75rem; max-height: 150px; overflow-y: auto; display: none; }
   #debugPanel.show { display: block; }
@@ -159,7 +159,7 @@
   .account-form { display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 15px; background: #f0fdf4; border: 1px solid #27ae60; border-radius: 10px; }
   .account-form.show { display: flex; }
   .account-form input { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 0.95rem; outline: none; }
-  .account-form input:focus { border-color: #667eea; }
+  .account-form input:focus { border-color: #e53935; }
   .account-form button { padding: 12px; background: #27ae60; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
   .account-form button:hover { background: #219653; }
   
@@ -170,8 +170,8 @@
   .acc-info { flex: 1; min-width: 0; }
   .acc-detail { font-size: 0.85rem; color: #666; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
   .acc-detail strong { color: #444; min-width: 70px; display: inline-block; }
-  .copy-btn { background: #eef1ff; border: none; color: #667eea; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
-  .copy-btn:hover { background: #667eea; color: #fff; }
+  .copy-btn { background: #ffebee; border: none; color: #e53935; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+  .copy-btn:hover { background: #e53935; color: #fff; }
   .del-acc-btn { background: transparent; border: none; color: #e74c3c; font-size: 1.1rem; cursor: pointer; padding: 4px; }
   .del-acc-btn:hover { color: #c0392b; }
 
@@ -244,7 +244,7 @@
     <h2 id="modalTitle" style="font-size: 1.4rem; color: #333; margin-bottom: 5px; text-align: center;">🔐 Daftar Akun</h2>
     <p id="modalSubtitle" style="text-align: center; color: #888; font-size: 0.85rem; margin-bottom: 20px;">Semua akun aplikasi Anda terpusat di sini</p>
 
-    <button id="backToAllBtn" style="display:none; background: #eef1ff; color: #667eea; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 15px; width: 100%;">⬅ Kembali ke Semua Akun</button>
+    <button id="backToAllBtn" style="display:none; background: #ffebee; color: #e53935; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 15px; width: 100%;">⬅ Kembali ke Semua Akun</button>
 
     <button class="add-acc-toggle" id="showAddAccBtn">➕ Tambah Username Baru</button>
     
@@ -261,8 +261,8 @@
 
 <script>
   // ============ KONFIGURASI SUPABASE ============
-  const SUPABASE_URL = 'https://ztwquwwjrqltxrrgwgvv.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcnFob2xlZmVvb2Fya25pd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3MjAxNjUsImV4cCI6MjEwODI5NjE2NX0.PNNdUDDf9cCh2rTXNXD9wObr5uUfggBz4sTSsHbfCn4'; 
+  const SUPABASE_URL = 'https://yarqibpatnrmwzhyabmi.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_9nDyrOZ9XIis3qVt93EVWQ_amvg-SbK'; 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ============ STATE ============
